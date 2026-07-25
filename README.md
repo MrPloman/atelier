@@ -12,11 +12,36 @@ Catches broken, unused, and inaccessible design tokens before they reach product
 
 ## Example
 
-[ejemplo de 5 líneas, aún por escribir]
+```bash
+npx @mrploman/atelier check tokens.json
+
+✖ 2 errors, 1 warning
+
+ERROR  color.text.on-brand
+       Broken reference: {color.palette.white} does not exist.
+
+ERROR  contrast  color.text.default on color.surface.subtle
+       Ratio 3.9:1. Minimum for AA: 4.5:1.
+
+WARN   color.palette.blue-450
+       Defined but never referenced.
+```
+
+Exits with a non-zero code — wire it into your CI and nothing broken reaches production.
+
+## Usage
+
+```ts
+import { check } from "@mrploman/atelier";
+
+const result = check(tokens);
+
+if (result.some((r) => !r.ok)) {
+    process.exit(1);
+}
+```
 
 ## Why not Style Dictionary?
-
-[tabla comparativa honesta, aún por escribir]
 
 ## Packages
 
