@@ -1,7 +1,7 @@
 import { accessibility } from "../rules/accessability";
-import { brokenReferences } from "../rules/brokenReferences";
-import { orphanedTokens } from "../rules/orphanedTokens";
-import { unreferencedCSS } from "../rules/unreferencedCSS";
+import { brokenReferences } from "../rules/broken-references";
+import { orphanedTokens } from "../rules/orphaned-tokens";
+import { unreferencedCSS } from "../rules/unreferenced-css";
 import { Result } from "../types";
 
 export function mainChecker(tokens: unknown): Result[] {
