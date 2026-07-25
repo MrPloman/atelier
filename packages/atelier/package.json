@@ -1,0 +1,9 @@
+{
+                "name": "@mrploman/atelier",
+                "version": "0.0.1",
+                "description": "Design token pipeline with built-in validation — in development",
+                "license": "MIT",
+                "publishConfig": {
+                                "access": "public"
+                }
+}
