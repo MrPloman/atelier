@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# test coverage
+coverage/
+
+# turbo cache
+.turbo/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+
+# env
+.env
+.env.local
