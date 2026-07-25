@@ -1,4 +1,4 @@
-import { ErrorResult, Result } from "../types";
+import type { ErrorResult, Result } from "@/types";
 
 export function unreferencedCSS(tokens: unknown): Result {
     const errors: ErrorResult[] = [];

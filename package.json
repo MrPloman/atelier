@@ -1,0 +1,19 @@
+{
+                "name": "atelier-monorepo",
+                "private": true,
+                "type": "module",
+                "packageManager": "pnpm@9.0.0",
+                "engines": {
+                                "node": ">=22"
+                },
+                "scripts": {
+                                "build": "turbo build",
+                                "test": "turbo test",
+                                "typecheck": "turbo typecheck"
+                },
+                "devDependencies": {
+                                "turbo": "^2.0.0",
+                                "typescript": "^5.9.0",
+                                "vitest": "^3.0.0"
+                }
+}

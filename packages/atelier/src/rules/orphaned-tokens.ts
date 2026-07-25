@@ -1,4 +1,4 @@
-import { ErrorResult, OrphanedResult } from "../types";
+import type { ErrorResult, OrphanedResult } from "@/types";
 
 export function orphanedTokens(tokens: unknown): OrphanedResult {
     const errors: ErrorResult[] = [];

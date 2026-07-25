@@ -1,4 +1,4 @@
-import { ErrorResult, ReferencesResult } from "../types";
+import type { ErrorResult, ReferencesResult } from "@/types";
 
 export function brokenReferences(tokens: unknown): ReferencesResult {
     const errors: ErrorResult[] = [];
