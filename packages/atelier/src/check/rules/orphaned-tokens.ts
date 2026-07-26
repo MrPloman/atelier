@@ -1,7 +1,8 @@
-import type { ErrorResult, OrphanedResult } from "@/types";
+import type { Diagnostic } from "@/types";
+import type { OrphanedResult } from "../types";
 
 export function orphanedTokens(tokens: unknown): OrphanedResult {
-    const errors: ErrorResult[] = [];
+    const errors: Diagnostic[] = [];
     return {
         process: "orphaned",
         errors,

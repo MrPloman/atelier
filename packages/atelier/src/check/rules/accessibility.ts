@@ -1,7 +1,8 @@
-import type { ErrorResult, Result } from "@/types";
+import type { Diagnostic } from "@/types";
+import type { Result } from "../types";
 
 export function accessibility(tokens: unknown): Result {
-    const errors: ErrorResult[] = [];
+    const errors: Diagnostic[] = [];
     return {
         process: "accessibility",
         errors,
