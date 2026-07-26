@@ -1,0 +1,67 @@
+{
+  "color": {
+    "primary": {
+      "blue": {
+        "500": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.008,
+              0.396,
+              0.863
+            ],
+            "hex": "#0265DC"
+          },
+          "$description": "Azul base de la paleta corporativa"
+        }
+      }
+    },
+    "secondary": {
+      "gray": {
+        "100": {
+          "$type": "color",
+          "$value": {
+            "colorSpace": "srgb",
+            "components": [
+              0.957,
+              0.961,
+              0.969
+            ],
+            "hex": "#F4F5F7"
+          },
+          "$description": "Gris base de la paleta"
+        }
+      }
+    }
+  },
+  "semantic": {
+    "$type": "color",
+    "text": {
+      "primary": {
+        "$value": "{color.primary.blue.500}"
+      },
+      "secondary": {
+        "$value": "{color.secondary.gray.100}"
+      }
+    },
+    "background": {
+      "primary": {
+        "$value": "{color.secondary.gray.100}"
+      },
+      "secondary": {
+        "$value": "{color.primary.blue.500}"
+      }
+    }
+  },
+  "component": {
+    "button": {
+      "text": {
+        "$value": "{semantic.text.primary}"
+      },
+      "background": {
+        "$value": "{semantic.background.primary}"
+      }
+    }
+  }
+}
