@@ -71,22 +71,20 @@ const flatTokens = new Map<string, RawToken>([
 
 function resolve(startPath: string, _flatTokens: Map<string, RawToken>): any {
     let detectedRoutes: string[] = [];
-    return iteratorMap(startPath, _flatTokens, detectedRoutes);
+    return { ...iteratorMap(startPath, _flatTokens, detectedRoutes), path: startPath };
 }
 
 function iteratorMap(path: string, _flatTokens: Map<string, RawToken>, detectedRoutes: string[]) {
     if (!_flatTokens.get(path)?.$type && typeof _flatTokens.get(path)?.$value === "string") {
-        let routeString: string = _flatTokens.get(path)?.$value as string;
+        let routeString: string = routeStringParser(_flatTokens.get(path)?.$value as string);
         if (routesManager(routeString, detectedRoutes))
             return iteratorMap(routeString, _flatTokens, detectedRoutes);
         else {
             throw new Error("ERROR: Structure Misfunction");
         }
     } else {
-        let routeString: string = routeStringParser(_flatTokens.get(path)?.$value as string);
         return {
             value: _flatTokens.get(path)?.$value,
-            path: routeString,
             references: detectedRoutes,
             type: _flatTokens.get(path)?.$type as TokenType,
         };
@@ -96,7 +94,7 @@ function iteratorMap(path: string, _flatTokens: Map<string, RawToken>, detectedR
 function routesManager(route: string, detectedRoutes: string[]): boolean {
     let _routeParsed = routeStringParser(route);
     if (!detectedRoutes.includes(_routeParsed)) {
-        detectedRoutes = [...detectedRoutes, _routeParsed];
+        detectedRoutes.push(_routeParsed);
         return true;
     } else return false;
 }
