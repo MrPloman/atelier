@@ -7,9 +7,9 @@
                                 "node": ">=22"
                 },
                 "scripts": {
-                                "build": "turbo build",
-                                "test": "turbo test",
-                                "typecheck": "turbo typecheck"
+                                "build": "turbo run build --filter=!//",
+                                "test": "turbo run test --filter=!//",
+                                "typecheck": "turbo run typecheck --filter=!//"
                 },
                 "devDependencies": {
                                 "turbo": "^2.0.0",

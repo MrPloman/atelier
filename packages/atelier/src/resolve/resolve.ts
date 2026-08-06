@@ -1,6 +1,6 @@
 import type { RawToken, TokenType } from "@/types";
 
-const flatTokens = new Map<string, RawToken>([
+const currentflatTokens = new Map<string, RawToken>([
     [
         "color.primary.blue.500",
         {
@@ -69,37 +69,72 @@ const flatTokens = new Map<string, RawToken>([
     ],
 ]);
 
-function resolve(startPath: string, _flatTokens: Map<string, RawToken>): any {
+export function resolve(startPath: string, _flatTokens: Map<string, RawToken>): any {
     let detectedRoutes: string[] = [];
-    return { ...iteratorMap(startPath, _flatTokens, detectedRoutes), path: startPath };
+    return {
+        ...iteratorMap(startPath, _flatTokens, detectedRoutes),
+        path: startPath,
+    };
 }
 
 function iteratorMap(path: string, _flatTokens: Map<string, RawToken>, detectedRoutes: string[]) {
-    if (!_flatTokens.get(path)?.$type && typeof _flatTokens.get(path)?.$value === "string") {
-        let routeString: string = routeStringParser(_flatTokens.get(path)?.$value as string);
+    const currentToken: RawToken | undefined = _flatTokens.get(path);
+    console.log(currentToken);
+    if (!currentToken || !currentToken.$value) {
+        const jsonInMessage = JSON.stringify({
+            path,
+            references: detectedRoutes,
+            type: "",
+        });
+        throw new Error(`
+                        [ERROR] Broken reference detected at iteratorMap().
+                        Invalid Tokens Reference: No value detected in ${path} .
+                        Failure path location in token: 
+                        {
+                            ${jsonInMessage}
+                        }
+        `);
+    }
+    if (currentToken && currentToken.$type && typeof currentToken.$value === "string") {
+        let routeString: string = routeStringParser(currentToken.$value as string);
         if (routesManager(routeString, detectedRoutes))
-            return iteratorMap(routeString, _flatTokens, detectedRoutes);
+            return iteratorMap(routeString, new Map().set("string", currentToken), detectedRoutes);
         else {
-            throw new Error("ERROR: Structure Misfunction");
+            const jsonInMessage = JSON.stringify({
+                path: routeString,
+                references: detectedRoutes,
+                type: currentToken.$type ? currentToken.$type : currentToken.$value,
+            });
+            throw new Error(`
+                        [ERROR] Duplicated reference cycled detected at iteratorMap().
+                        Invalid Tokens Format: too many iterations due to invalid structure.
+                        Failure path location in token: 
+                            {
+                                ${jsonInMessage}
+                            }
+                        `);
         }
     } else {
         return {
-            value: _flatTokens.get(path)?.$value,
+            value: currentToken.$value,
             references: detectedRoutes,
-            type: _flatTokens.get(path)?.$type as TokenType,
+            type: currentToken.$type as TokenType,
         };
     }
 }
 
-function routesManager(route: string, detectedRoutes: string[]): boolean {
+function routesManager(
+    route: string,
+    detectedRoutes: string[],
+): { pass: boolean; detectedRoutes: string[] } {
     let _routeParsed = routeStringParser(route);
     if (!detectedRoutes.includes(_routeParsed)) {
         detectedRoutes.push(_routeParsed);
-        return true;
-    } else return false;
+        return { pass: true, detectedRoutes };
+    } else return { pass: false, detectedRoutes };
 }
 function routeStringParser(route: string): string {
     return route.replaceAll("{", "").replaceAll("}", "");
 }
 
-resolve("component.button.text", flatTokens);
+// resolve("component.button.text", flatTokens);
