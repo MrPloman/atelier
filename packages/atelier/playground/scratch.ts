@@ -1,5 +1,6 @@
 // playground/scratch.ts
-import { resolve } from "../src/resolve/resolve"; // ajusta al path real de tu resolver
+
+import { resolveAll } from "../src/resolve/resolve";
 
 // ============================================================
 // A) DEBEN TENER ÉXITO — sin typos
@@ -100,50 +101,63 @@ const c2 = new Map([
 // 'a' no está en el Map (solo 'b'), así que la búsqueda inicial ya falla
 const c3 = new Map([["b", { $value: "10px" }]]);
 
-console.log("=== TESTS DE RESOLVER ===");
-console.log("A1:", resolve("a", a1));
-console.log("A2:", resolve("a", a2));
-console.log("A3:", resolve("a", a3));
-console.log("A4 (desde 'a'):", resolve("a", a4));
-console.log("A4 (desde 'x'):", resolve("x", a4));
+// console.log("=== TESTS DE RESOLVER ===");
+// console.log("A1:", resolve("a", a1));
+// console.log("A2:", resolve("a", a2));
+// console.log("A3:", resolve("a", a3));
+// console.log("A4 (desde 'a'):", resolve("a", a4));
+// console.log("A4 (desde 'x'):", resolve("x", a4));
 
-try {
-    console.log("B1:", resolve("a", b1));
-} catch (e: any) {
-    console.error("B1 ERROR:", e.message);
-}
+// try {
+//     console.log("B1:", resolve("a", b1));
+// } catch (e: any) {
+//     console.error("B1 ERROR:", e.message);
+// }
 
-try {
-    console.log("B2:", resolve("a", b2));
-} catch (e: any) {
-    console.error("B2 ERROR:", e.message);
-}
+// try {
+//     console.log("B2:", resolve("a", b2));
+// } catch (e: any) {
+//     console.error("B2 ERROR:", e.message);
+// }
 
-try {
-    console.log("B3:", resolve("a", b3));
-} catch (e: any) {
-    console.error("B3 ERROR:", e.message);
-}
+// try {
+//     console.log("B3:", resolve("a", b3));
+// } catch (e: any) {
+//     console.error("B3 ERROR:", e.message);
+// }
 
-try {
-    console.log("B4:", resolve("a", b4));
-} catch (e: any) {
-    console.error("B4 ERROR:", e?.message);
-}
+// try {
+//     console.log("B4:", resolve("a", b4));
+// } catch (e: any) {
+//     console.error("B4 ERROR:", e?.message);
+// }
 
-try {
-    console.log("C1:", resolve("a", c1));
-} catch (e: any) {
-    console.error("C1 ERROR:", e.message);
-}
-try {
-    console.log("C2:", resolve("a", c2));
-} catch (e: any) {
-    console.error("C2 ERROR:", e.message);
-}
+// try {
+//     console.log("C1:", resolve("a", c1));
+// } catch (e: any) {
+//     console.error("C1 ERROR:", e.message);
+// }
+// try {
+//     console.log("C2:", resolve("a", c2));
+// } catch (e: any) {
+//     console.error("C2 ERROR:", e.message);
+// }
 
-try {
-    console.log("C3:", resolve("a", c3));
-} catch (e: any) {
-    console.error("C3 ERROR:", e.message);
-}
+// try {
+//     console.log("C3:", resolve("a", c3));
+// } catch (e: any) {
+//     console.error("C3 ERROR:", e.message);
+// }
+const mixedFlatTokens = new Map([
+    // Sano — debería acabar en `resolved`
+    ["color.brand", { $value: "#ff0000" }],
+
+    // Ciclo — debería acabar en `errors`, code: 'cycle'
+    ["spacing.broken", { $value: "{spacing.loop}" }],
+    ["spacing.loop", { $value: "{spacing.broken}" }],
+
+    // Referencia rota — debería acabar en `errors`, code: 'broken-reference'
+    ["font.missing", { $value: "{font.doesNotExist}" }],
+]);
+
+console.log(resolveAll(mixedFlatTokens));
