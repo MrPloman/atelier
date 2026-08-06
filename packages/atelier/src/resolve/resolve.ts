@@ -1,146 +1,101 @@
 import type { RawToken, TokenType } from "@/types";
+import type { UnvalidatedResolvedToken } from "@/types/resolved";
 
-// const currentflatTokens = new Map<string, RawToken>([
-//     [
-//         "color.primary.blue.500",
-//         {
-//             $type: "color",
-//             $value: {
-//                 colorSpace: "srgb",
-//                 components: [0.008, 0.396, 0.863],
-//                 hex: "#0265DC",
-//             },
-//         },
-//     ],
-
-//     [
-//         "color.secondary.gray.100",
-//         {
-//             $type: "color",
-//             $value: {
-//                 colorSpace: "srgb",
-//                 components: [0.957, 0.961, 0.969],
-//                 hex: "#F4F5F7",
-//             },
-//         },
-//     ],
-
-//     [
-//         "semantic.text.primary",
-//         {
-//             // ojo: sin $type propio -- lo hereda de "semantic", que en el árbol original lo declaraba
-//             $value: "{color.primary.blue.500}",
-//         },
-//     ],
-
-//     [
-//         "semantic.text.secondary",
-//         {
-//             $value: "{color.secondary.gray.100}",
-//         },
-//     ],
-
-//     [
-//         "semantic.background.primary",
-//         {
-//             $value: "{color.secondary.gray.100}",
-//         },
-//     ],
-
-//     [
-//         "semantic.background.secondary",
-//         {
-//             $value: "{color.primary.blue.500}",
-//         },
-//     ],
-
-//     [
-//         "component.button.text",
-//         {
-//             $value: "{semantic.text.primary}",
-//         },
-//     ],
-
-//     [
-//         "component.button.background",
-//         {
-//             $value: "{semantic.background.primary}",
-//         },
-//     ],
-// ]);
-
-// MainResolver
-export function resolve(startPath: string, _flatTokens: Map<string, RawToken>): any {
-    let detectedRoutes: string[] = [];
+export function resolve(
+    startPath: string,
+    _flatTokens: Map<string, RawToken>,
+): UnvalidatedResolvedToken {
+    const detectedRoutes: string[] = [];
     return {
         path: startPath,
-
-        ...iteratorMap(startPath, _flatTokens, detectedRoutes),
+        ...iteratorMap(startPath, _flatTokens, detectedRoutes, startPath),
     };
 }
 
-// Iterator called all every cycle
-function iteratorMap(path: string, _flatTokens: Map<string, RawToken>, detectedRoutes: string[]) {
+function iteratorMap(
+    path: string,
+    _flatTokens: Map<string, RawToken>,
+    detectedRoutes: string[],
+    startPath: string,
+): { type: TokenType | undefined; value: unknown; references: string[] } {
     const currentToken: RawToken = _flatTokens.get(path) as RawToken;
 
-    if (!currentToken || !currentToken.$value) {
-        const jsonInMessage = JSON.stringify({
-            path,
-            references: detectedRoutes,
-            type: "",
-        });
-        throw new Error(`
-                        [ERROR] Broken reference detected at iteratorMap().
-                        Invalid Tokens Reference: No value detected in ${path} .
-                        Failure path location in token: 
-                        {
-                            ${jsonInMessage}
-                        }
-        `);
+    if (!currentToken || !currentToken.$value || isRawToken(currentToken) === false) {
+        throw new Error(buildBrokenReferenceError(path, detectedRoutes, currentToken?.$type));
     }
 
     if (!valueIsNotFinal(currentToken.$value)) {
-        // THIS IS FINAL VALUE
-
         return {
             type: currentToken.$type as TokenType,
             value: currentToken.$value,
             references: detectedRoutes,
         };
+    }
+
+    const routeString = routeStringParser(currentToken.$value as string);
+    const { newDetectedRoutes, routeDuplicity } = routesManager(
+        routeString,
+        detectedRoutes,
+        startPath,
+    );
+
+    if (!routeDuplicity) {
+        return iteratorMap(routeString, _flatTokens, newDetectedRoutes, startPath);
     } else {
-        // THIS IMPLIES ANOTHER ITERATION
-        let routeString: string = routeStringParser(currentToken.$value as string);
-        const { newDetectedRoutes, routeDuplicity } = routesManager(routeString, detectedRoutes);
-        if (!routeDuplicity) {
-            // THERE IS NO DUPLICITY INSIDE THE ARRAY, SO GETS ANOTHER ITERATION
-            return iteratorMap(routeString, _flatTokens, newDetectedRoutes);
-        } else {
-            const jsonInMessage = JSON.stringify({
-                path: routeString,
-                references: detectedRoutes,
-                type: currentToken.$type ? currentToken.$type : undefined,
-            });
-            throw new Error(`
-                        [ERROR] Duplicated reference cycled detected at iteratorMap().
-                        Invalid Tokens Format: too many iterations due to invalid structure.
-                        Failure path location in token:
-                            {
-                                ${jsonInMessage}
-                            }
-                        `);
-        }
+        throw new Error(
+            buildCycleError(startPath, detectedRoutes, routeString, currentToken.$type),
+        );
     }
 }
 
+// La comprobación de duplicados ahora vigila [startPath, ...detectedRoutes],
+// pero lo que se acumula y se devuelve como `references` sigue siendo solo
+// los destinos saltados — el contrato público de A1-A4 no cambia.
 function routesManager(
     route: string,
     detectedRoutes: string[],
+    startPath: string,
 ): { routeDuplicity: boolean; newDetectedRoutes: string[] } {
-    if (!detectedRoutes.includes(route)) {
-        const newRoutes = [detectedRoutes, route].flat();
-        return { routeDuplicity: false, newDetectedRoutes: newRoutes };
-    } else return { routeDuplicity: true, newDetectedRoutes: detectedRoutes };
+    const seen = [startPath, ...detectedRoutes];
+    if (!seen.includes(route)) {
+        return { routeDuplicity: false, newDetectedRoutes: [...detectedRoutes, route] };
+    }
+    return { routeDuplicity: true, newDetectedRoutes: detectedRoutes };
 }
+
+function buildCycleError(
+    startPath: string,
+    detectedRoutes: string[],
+    routeString: string,
+    type: TokenType | undefined,
+): string {
+    const chain = [startPath, ...detectedRoutes, routeString].join(" → ");
+    return `
+                    [ERROR] Cyclic reference detected at iteratorMap().
+                    Invalid Tokens Routing: circular chain found.
+                    Cycle: ${chain}
+                    Failure path location in token:
+                        {
+                            ${JSON.stringify({ path: routeString, references: detectedRoutes, type })}
+                        }
+                    `;
+}
+
+function buildBrokenReferenceError(
+    path: string,
+    detectedRoutes: string[],
+    type: TokenType | undefined,
+): string {
+    return `
+                    [ERROR] Broken reference detected at iteratorMap().
+                    Invalid Tokens Reference: No value detected in ${path} .
+                    Failure path location in token: 
+                    {
+                        ${JSON.stringify({ path, references: detectedRoutes, type })}
+                    }
+    `;
+}
+
 function routeStringParser(route: string): string {
     return route.replaceAll("{", "").replaceAll("}", "");
 }
@@ -150,4 +105,6 @@ function valueIsNotFinal(value: unknown): boolean {
     return value.startsWith("{") && value.endsWith("}");
 }
 
-// resolve("component.button.text", flatTokens);
+function isRawToken(rawToken: unknown): rawToken is RawToken {
+    return typeof rawToken === "object" && rawToken !== null && "$value" in rawToken;
+}
