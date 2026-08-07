@@ -1,4 +1,4 @@
-export type ResolveErrorKind = "cycle" | "broken-reference" | "unknown";
+export type ResolveErrorKind = "cycle" | "broken-reference" | "unknown" | "invalid-json";
 
 export class AtelierResolveError extends Error {
     readonly kind: ResolveErrorKind;
