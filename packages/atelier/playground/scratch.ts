@@ -1,7 +1,6 @@
 // playground/scratch.ts
 
-import { walk } from "../src/walk/walk";
-
+import { parseTokens } from "../src/parse/parse";
 // ============================================================
 // A) DEBEN TENER ÉXITO — sin typos
 // ============================================================
@@ -161,13 +160,87 @@ const c3 = new Map([["b", { $value: "10px" }]]);
 // ]);
 
 // console.log(resolveAll(mixedFlatTokens));
-const testDoc = {
-    spacing: {
-        $type: "dimension",
-        small: { $value: "4px" },
-        special: { $type: "number", $value: 2 },
-    },
-    misterioso: { $value: "4px" },
-};
+// const testDoc = {
+//     spacing: {
+//         $type: "dimension",
+//         small: { $value: "4px" },
+//         special: { $type: "number", $value: 2 },
+//     },
+//     misterioso: { $value: "4px" },
+// };
 
-console.log(walk(testDoc));
+// console.log(walk(testDoc));
+
+// playground/scratch.ts
+
+// ============================================================
+// D) parseTokens — casos de integración end-to-end
+// ============================================================
+
+// D1. JSON malformado — debe LANZAR (throw), no devolver Diagnostic
+// El string ni siquiera es JSON válido (coma colgando)
+// Esperado: catch con code 'invalid-json' — ojo, espera: esto SÍ es Diagnostic,
+// no throw — confirmar cuál de los dos según lo que implementaste
+const d1_rawJson = `{ "a": { "$value": "10px", } }`;
+
+// D2. JSON válido pero con estructura de nodo irreconocible — debe LANZAR (throw)
+// El valor de "a" es un número suelto, ni RawGroup ni RawToken
+const d2_rawJson = JSON.stringify({
+    a: 42,
+});
+
+// D3. Documento completamente sano — sin errores
+// Esperado: resolved con 1 entrada, errors: []
+const d3_rawJson = JSON.stringify({
+    color: {
+        $type: "color",
+        brand: { $value: "#ff0000" },
+    },
+});
+
+// D4. Documento válido en estructura, con ciclo dentro — debe ir a Diagnostic, NO throw
+// Esperado: resolved vacío para esos dos, errors con code 'cycle' x2
+const d4_rawJson = JSON.stringify({
+    spacing: {
+        broken: { $value: "{spacing.loop}" },
+        loop: { $value: "{spacing.broken}" },
+    },
+});
+
+// D5. Documento válido en estructura, con referencia rota dentro
+// Esperado: errors con code 'broken-reference'
+const d5_rawJson = JSON.stringify({
+    font: {
+        missing: { $value: "{font.doesNotExist}" },
+    },
+});
+
+// D6. El caso completo — mezcla de sano + ciclo + referencia rota + herencia de tipo
+// Esperado: resolved con 'color.brand' (type: 'color', heredado) y con el que
+// gane el ciclo tal como vimos en resolveAll (uno de los dos puede colarse
+// según el orden de iteración) — errors con 'cycle' y 'broken-reference'
+const d6_rawJson = JSON.stringify({
+    color: {
+        $type: "color",
+        brand: { $value: "#ff0000" },
+    },
+    spacing: {
+        broken: { $value: "{spacing.loop}" },
+        loop: { $value: "{spacing.broken}" },
+    },
+    font: {
+        missing: { $value: "{font.doesNotExist}" },
+    },
+});
+
+// D7. String vacío como input — caso límite, ¿qué hace JSON.parse('')?
+// Esperado: probablemente cae en la rama de invalid-json / throw, dependiendo
+// de tu implementación — buen caso límite para confirmar
+const d7_rawJson = "";
+// console.log(parseTokens(d1_rawJson));
+// console.log(parseTokens(d2_rawJson));
+// console.log(parseTokens(d3_rawJson));
+// console.log(parseTokens(d4_rawJson));
+// console.log(parseTokens(d5_rawJson));
+// console.log(parseTokens(d6_rawJson));
+console.log(parseTokens(d7_rawJson));
