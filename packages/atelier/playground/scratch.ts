@@ -1,6 +1,6 @@
 // playground/scratch.ts
 
-import { resolveAll } from "../src/resolve/resolve";
+import { walk } from "../src/walk/walk";
 
 // ============================================================
 // A) DEBEN TENER ÉXITO — sin typos
@@ -148,16 +148,26 @@ const c3 = new Map([["b", { $value: "10px" }]]);
 // } catch (e: any) {
 //     console.error("C3 ERROR:", e.message);
 // }
-const mixedFlatTokens = new Map([
-    // Sano — debería acabar en `resolved`
-    ["color.brand", { $value: "#ff0000" }],
+// const mixedFlatTokens = new Map([
+//     // Sano — debería acabar en `resolved`
+//     ["color.brand", { $value: "#ff0000" }],
 
-    // Ciclo — debería acabar en `errors`, code: 'cycle'
-    ["spacing.broken", { $value: "{spacing.loop}" }],
-    ["spacing.loop", { $value: "{spacing.broken}" }],
+//     // Ciclo — debería acabar en `errors`, code: 'cycle'
+//     ["spacing.broken", { $value: "{spacing.loop}" }],
+//     ["spacing.loop", { $value: "{spacing.broken}" }],
 
-    // Referencia rota — debería acabar en `errors`, code: 'broken-reference'
-    ["font.missing", { $value: "{font.doesNotExist}" }],
-]);
+//     // Referencia rota — debería acabar en `errors`, code: 'broken-reference'
+//     ["font.missing", { $value: "{font.doesNotExist}" }],
+// ]);
 
-console.log(resolveAll(mixedFlatTokens));
+// console.log(resolveAll(mixedFlatTokens));
+const testDoc = {
+    spacing: {
+        $type: "dimension",
+        small: { $value: "4px" },
+        special: { $type: "number", $value: 2 },
+    },
+    misterioso: { $value: "4px" },
+};
+
+console.log(walk(testDoc));

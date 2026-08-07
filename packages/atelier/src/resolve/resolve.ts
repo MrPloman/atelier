@@ -1,6 +1,7 @@
 import { AtelierResolveError } from "@/models/errors";
 import type { Diagnostic, RawToken, TokenType } from "@/types";
 import type { UnvalidatedResolvedToken } from "@/types/resolved";
+import { isRawToken } from "@/utils/type-guards";
 
 export function resolveAll(_flatTokens: Map<string, RawToken>): {
     resolved: Map<string, UnvalidatedResolvedToken>;
@@ -139,8 +140,4 @@ function routeStringParser(route: string): string {
 function valueIsNotFinal(value: unknown): boolean {
     if (typeof value !== "string") return false;
     return value.startsWith("{") && value.endsWith("}");
-}
-
-function isRawToken(rawToken: unknown): rawToken is RawToken {
-    return typeof rawToken === "object" && rawToken !== null && "$value" in rawToken;
 }
