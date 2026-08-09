@@ -1,6 +1,6 @@
-import { resolve } from "@/resolve/resolve";
 import type { RawToken } from "@/types";
 import { describe, it } from "vitest";
+import { resolveAll } from "../src/resolve/resolve";
 
 describe("smoke test", () => {
     it("sanity check", () => {
@@ -10,6 +10,6 @@ describe("smoke test", () => {
             ["a", { $value: "{b}" }],
         ]);
 
-        console.log(resolve("b", mapaConCiclo));
+        console.log(resolveAll(mapaConCiclo));
     });
 });

@@ -34,7 +34,10 @@ export function resolveAll(_flatTokens: Map<string, RawToken>): {
     }
     return globalResults;
 }
-function resolve(startPath: string, _flatTokens: Map<string, RawToken>): UnvalidatedResolvedToken {
+export function resolve(
+    startPath: string,
+    _flatTokens: Map<string, RawToken>,
+): UnvalidatedResolvedToken {
     const detectedRoutes: string[] = [];
     return {
         path: startPath,
