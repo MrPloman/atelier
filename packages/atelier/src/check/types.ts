@@ -13,3 +13,4 @@ export interface ReferencesResult extends Result {
 export interface OrphanedResult extends Result {
     tokens: string[];
 }
+export type ShapeResult<T> = { ok: true; value: T } | { ok: false; error: Diagnostic };

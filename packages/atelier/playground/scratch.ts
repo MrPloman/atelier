@@ -1,6 +1,5 @@
 // playground/scratch.ts
 
-import { parseTokens } from "../src/parse/parse";
 // ============================================================
 // A) DEBEN TENER ÉXITO — sin typos
 // ============================================================
@@ -243,4 +242,72 @@ const d7_rawJson = "";
 // console.log(parseTokens(d4_rawJson));
 // console.log(parseTokens(d5_rawJson));
 // console.log(parseTokens(d6_rawJson));
-console.log(parseTokens(d7_rawJson));
+// console.log(parseTokens(d7_rawJson));
+// playground/scratch.ts
+import { validateColorValue } from "../src/check/shape/color"; // ajusta el path real
+
+// ============================================================
+// E) validateColorValue — casos de prueba
+// ============================================================
+
+// E1. ColorValue completamente válido, con todos los campos
+// Esperado: { ok: true, value: {...} }
+const e1 = validateColorValue(
+    { colorSpace: "srgb", components: [1, 0, 0], alpha: 1, hex: "#ff0000" },
+    "color.brand",
+);
+
+// E2. ColorValue válido, solo con los campos obligatorios (sin alpha/hex)
+// Esperado: { ok: true, value: {...} } — alpha y hex son opcionales
+const e2 = validateColorValue({ colorSpace: "srgb", components: [1, 0, 0] }, "color.brand");
+
+// E3. No es un objeto en absoluto — value llega como string
+// Esperado: { ok: false, error: { ..., hint: 'Expected an object for color value, got string' } }
+const e3 = validateColorValue("#ff0000", "color.brand");
+
+// E4. Es un objeto pero le falta colorSpace
+// Esperado: { ok: false, error: { ..., hint: contiene 'colorSpace' } }
+const e4 = validateColorValue({ components: [1, 0, 0] }, "color.brand");
+
+// E5. colorSpace tiene el tipo equivocado (number en vez de string)
+// Esperado: { ok: false, error: { ..., hint: contiene 'colorSpace' } }
+const e5 = validateColorValue({ colorSpace: 123, components: [1, 0, 0] }, "color.brand");
+
+// E6. components no es un array
+// Esperado: { ok: false, error: { ..., hint: contiene 'components' } }
+const e6 = validateColorValue({ colorSpace: "srgb", components: "not-an-array" }, "color.brand");
+
+// E7. components es un array, pero con algo que no es number dentro
+// Esperado: { ok: false, error: { ..., hint: contiene 'components' } }
+const e7 = validateColorValue({ colorSpace: "srgb", components: [1, "oops", 0] }, "color.brand");
+
+// E8. alpha presente pero con tipo incorrecto (string en vez de number)
+// Esperado: { ok: false, error: { ..., hint: contiene 'alpha' } }
+const e8 = validateColorValue(
+    { colorSpace: "srgb", components: [1, 0, 0], alpha: "oops" },
+    "color.brand",
+);
+
+// E9. hex presente pero con tipo incorrecto (number en vez de string)
+// Esperado: { ok: false, error: { ..., hint: contiene 'hex' } }
+const e9 = validateColorValue(
+    { colorSpace: "srgb", components: [1, 0, 0], hex: 16711680 },
+    "color.brand",
+);
+
+// E10. null como value — caso límite típico que rompe checks de typeof mal hechos
+// Esperado: { ok: false, error: { ..., hint: 'Expected an object for color value, got object' } }
+// OJO: typeof null === 'object' en JS — este caso confirma que el check
+// `value === null` está haciendo su trabajo y no deja pasar null como si fuera válido
+const e10 = validateColorValue(null, "color.brand");
+
+console.log("E1 (válido completo):", e1);
+console.log("E2 (válido mínimo):", e2);
+console.log("E3 (no es objeto):", e3);
+console.log("E4 (falta colorSpace):", e4);
+console.log("E5 (colorSpace mal tipado):", e5);
+console.log("E6 (components no es array):", e6);
+console.log("E7 (components con elemento no-number):", e7);
+console.log("E8 (alpha mal tipado):", e8);
+console.log("E9 (hex mal tipado):", e9);
+console.log("E10 (null):", e10);
