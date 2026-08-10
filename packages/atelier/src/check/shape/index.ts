@@ -1,5 +1,6 @@
 import type { ResolvedToken, UnvalidatedResolvedToken } from "@/types";
 import type { ShapeResult } from "../types";
+import { validateBorderValue } from "./border";
 import { validateColorValue } from "./color";
 import { validateCubicBezierValue } from "./cubicBezier";
 import { validateDimensionValue } from "./dimension";
@@ -7,6 +8,8 @@ import { validateDurationValue } from "./duration";
 import { validateFontFamilyValue } from "./fontFamily";
 import { validateFontWeightValue } from "./fontWeight";
 import { validateNumberValue } from "./number";
+import { validateTransitionValue } from "./transition";
+import { validateTypographyValue } from "./typography";
 
 export function checkTokenShape(token: UnvalidatedResolvedToken): ShapeResult<ResolvedToken> {
     const { path, type, value, references } = token;
@@ -69,11 +72,32 @@ export function checkTokenShape(token: UnvalidatedResolvedToken): ShapeResult<Re
             };
         }
 
-        case "typography":
+        case "typography": {
+            const result = validateTypographyValue(value, path);
+            if (!result.ok) return result;
+            return {
+                ok: true,
+                value: { path, type, value: result.value, references },
+            };
+        }
+        case "border": {
+            const result = validateBorderValue(value, path);
+            if (!result.ok) return result;
+            return {
+                ok: true,
+                value: { path, type, value: result.value, references },
+            };
+        }
+        case "transition": {
+            const result = validateTransitionValue(value, path);
+            if (!result.ok) return result;
+            return {
+                ok: true,
+                value: { path, type, value: result.value, references },
+            };
+        }
         case "shadow":
-        case "border":
         case "gradient":
-        case "transition":
         case "strokeStyle":
             return {
                 ok: false,

@@ -149,4 +149,8 @@ export interface TokenValueMap {
     transition: TransitionValue;
     lineHeight: LineHeightValue;
     letterSpacing: LetterSpacingValue;
+    typography: TypographyValue;
+    shadow: ShadowValue;
+    strokeStyle: StrokeStyleValue;
+    gradient: GradientValue;
 }
