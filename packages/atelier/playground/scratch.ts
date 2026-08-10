@@ -1,8 +1,5 @@
 // // // playground/scratch.ts
 
-import { resolveCompoundValue } from "../src/resolve/resolve";
-import { RawToken } from "../src/types/tokens";
-
 // // // ============================================================
 // // // A) DEBEN TENER ÉXITO — sin typos
 // // // ============================================================
@@ -406,81 +403,187 @@ import { RawToken } from "../src/types/tokens";
 // ============================================================
 
 // G1. Caso sano — un typography con campos alias a tokens simples + campos literales
-const g1_flatTokens = new Map<string, RawToken>([
-    ["font.family.sans", { $type: "fontFamily", $value: "Inter" }],
-    ["font.size.lg", { $type: "dimension", $value: { value: 18, unit: "px" } }],
-    ["font.weight.bold", { $type: "fontWeight", $value: 700 }],
+// const g1_flatTokens = new Map<string, RawToken>([
+//     ["font.family.sans", { $type: "fontFamily", $value: "Inter" }],
+//     ["font.size.lg", { $type: "dimension", $value: { value: 18, unit: "px" } }],
+//     ["font.weight.bold", { $type: "fontWeight", $value: 700 }],
+//     [
+//         "typography.heading",
+//         {
+//             $type: "typography",
+//             $value: {
+//                 fontFamily: "{font.family.sans}",
+//                 fontSize: "{font.size.lg}",
+//                 fontWeight: "{font.weight.bold}",
+//                 letterSpacing: "0.02em",
+//                 lineHeight: 1.4,
+//             },
+//         },
+//     ],
+// ]);
+// const g1_compoundValue = (g1_flatTokens.get("typography.heading") as RawToken).$value as Record<
+//     string,
+//     unknown
+// >;
+
+// console.log("=== G1 (caso sano, typography) ===");
+// try {
+//     console.log(resolveCompoundValue("typography.heading", g1_compoundValue, g1_flatTokens));
+// } catch (error) {
+//     console.log("ERROR INESPERADO:", error);
+// }
+
+// // G2. Ciclo directo — dos shadows que se referencian mutuamente por el campo 'color'
+// const g2_flatTokens = new Map<string, RawToken>([
+//     ["card", { $type: "shadow", $value: { color: "{modal}", offsetX: "2px" } }],
+//     ["modal", { $type: "shadow", $value: { color: "{card}", offsetX: "4px" } }],
+// ]);
+// const g2_compoundValue = (g2_flatTokens.get("card") as RawToken).$value as Record<string, unknown>;
+
+// console.log("=== G2 (ciclo directo card/modal) ===");
+// try {
+//     console.log(resolveCompoundValue("card", g2_compoundValue, g2_flatTokens));
+// } catch (error) {
+//     console.log("ERROR (esperado):", error);
+// }
+
+// // G3. Referencia rota dentro de un campo de compuesto
+// const g3_flatTokens = new Map<string, RawToken>([
+//     [
+//         "shadow.broken",
+//         { $type: "shadow", $value: { color: "{shadow.doesNotExist}", offsetX: "2px" } },
+//     ],
+// ]);
+// const g3_compoundValue = (g3_flatTokens.get("shadow.broken") as RawToken).$value as Record<
+//     string,
+//     unknown
+// >;
+
+// console.log("=== G3 (referencia rota) ===");
+// try {
+//     console.log(resolveCompoundValue("shadow.broken", g3_compoundValue, g3_flatTokens));
+// } catch (error) {
+//     console.log("ERROR (esperado):", error);
+// }
+
+// // G4. Compuesto apuntando a otro compuesto (sin ciclo) — opción A: se resuelve igual,
+// // sin juzgar semántica. El campo 'color' de 'card' terminará conteniendo el objeto
+// // completo resuelto de 'accent', no un ColorValue.
+// const g4_flatTokens = new Map<string, RawToken>([
+//     ["accent", { $type: "shadow", $value: { offsetX: "1px", offsetY: "1px" } }],
+//     ["card", { $type: "shadow", $value: { color: "{accent}", offsetX: "2px" } }],
+// ]);
+// const g4_compoundValue = (g4_flatTokens.get("card") as RawToken).$value as Record<string, unknown>;
+
+// console.log("=== G4 (compuesto apuntando a otro compuesto, sin ciclo) ===");
+// try {
+//     console.log(resolveCompoundValue("card", g4_compoundValue, g4_flatTokens));
+// } catch (error) {
+//     console.log("ERROR INESPERADO:", error);
+// }
+// playground/scratch.ts
+import { validateShadowValue } from "../src/check/shape/shadow"; // ajusta el path real
+
+// ============================================================
+// H) validateShadowValue — casos de prueba
+// ============================================================
+
+const validColor = { colorSpace: "srgb", components: [0, 0, 0], alpha: 0.15 };
+const validDimension = { value: 4, unit: "px" };
+
+// H1. Shadow único válido, sin inset (debe rellenarse con false por defecto)
+// Esperado: { ok: true, value: { color, offsetX, offsetY, blur, spread, inset: false } }
+const h1 = validateShadowValue(
+    {
+        color: validColor,
+        offsetX: { value: 0, unit: "px" },
+        offsetY: validDimension,
+        blur: { value: 8, unit: "px" },
+        spread: { value: 0, unit: "px" },
+    },
+    "shadow.card",
+);
+
+// H2. Shadow único válido, con inset explícito true
+// Esperado: { ok: true, value: { ..., inset: true } }
+const h2 = validateShadowValue(
+    {
+        color: validColor,
+        offsetX: { value: 0, unit: "px" },
+        offsetY: validDimension,
+        blur: { value: 8, unit: "px" },
+        spread: { value: 0, unit: "px" },
+        inset: true,
+    },
+    "shadow.inner",
+);
+
+// H3. Array de dos shadows, ambos válidos
+// Esperado: { ok: true, value: [ {...}, {...} ] }, un array de 2
+const h3 = validateShadowValue(
     [
-        "typography.heading",
         {
-            $type: "typography",
-            $value: {
-                fontFamily: "{font.family.sans}",
-                fontSize: "{font.size.lg}",
-                fontWeight: "{font.weight.bold}",
-                letterSpacing: "0.02em",
-                lineHeight: 1.4,
-            },
+            color: validColor,
+            offsetX: { value: 0, unit: "px" },
+            offsetY: { value: 1, unit: "px" },
+            blur: { value: 2, unit: "px" },
+            spread: { value: 0, unit: "px" },
+        },
+        {
+            color: validColor,
+            offsetX: { value: 0, unit: "px" },
+            offsetY: { value: 4, unit: "px" },
+            blur: { value: 12, unit: "px" },
+            spread: { value: -2, unit: "px" },
         },
     ],
-]);
-const g1_compoundValue = (g1_flatTokens.get("typography.heading") as RawToken).$value as Record<
-    string,
-    unknown
->;
+    "shadow.card",
+);
 
-console.log("=== G1 (caso sano, typography) ===");
-try {
-    console.log(resolveCompoundValue("typography.heading", g1_compoundValue, g1_flatTokens));
-} catch (error) {
-    console.log("ERROR INESPERADO:", error);
-}
-
-// G2. Ciclo directo — dos shadows que se referencian mutuamente por el campo 'color'
-const g2_flatTokens = new Map<string, RawToken>([
-    ["card", { $type: "shadow", $value: { color: "{modal}", offsetX: "2px" } }],
-    ["modal", { $type: "shadow", $value: { color: "{card}", offsetX: "4px" } }],
-]);
-const g2_compoundValue = (g2_flatTokens.get("card") as RawToken).$value as Record<string, unknown>;
-
-console.log("=== G2 (ciclo directo card/modal) ===");
-try {
-    console.log(resolveCompoundValue("card", g2_compoundValue, g2_flatTokens));
-} catch (error) {
-    console.log("ERROR (esperado):", error);
-}
-
-// G3. Referencia rota dentro de un campo de compuesto
-const g3_flatTokens = new Map<string, RawToken>([
+// H4. Array donde el SEGUNDO elemento tiene offsetX con forma rota
+// Esperado: { ok: false, error: { path: 'shadow.card[1].offsetX', ... } }
+// — confirma que el índice se refleja en el path, y que el primer elemento
+// (válido) no impide que se detecte el fallo en el segundo (fail-fast)
+const h4 = validateShadowValue(
     [
-        "shadow.broken",
-        { $type: "shadow", $value: { color: "{shadow.doesNotExist}", offsetX: "2px" } },
+        {
+            color: validColor,
+            offsetX: { value: 0, unit: "px" },
+            offsetY: { value: 1, unit: "px" },
+            blur: { value: 2, unit: "px" },
+            spread: { value: 0, unit: "px" },
+        },
+        {
+            color: validColor,
+            offsetX: { value: "not-a-number", unit: "px" }, // roto
+            offsetY: { value: 4, unit: "px" },
+            blur: { value: 12, unit: "px" },
+            spread: { value: -2, unit: "px" },
+        },
     ],
-]);
-const g3_compoundValue = (g3_flatTokens.get("shadow.broken") as RawToken).$value as Record<
-    string,
-    unknown
->;
+    "shadow.card",
+);
 
-console.log("=== G3 (referencia rota) ===");
-try {
-    console.log(resolveCompoundValue("shadow.broken", g3_compoundValue, g3_flatTokens));
-} catch (error) {
-    console.log("ERROR (esperado):", error);
-}
+// H5. Array vacío — debe rechazarse
+// Esperado: { ok: false, error: { hint: contiene 'empty array' } }
+const h5 = validateShadowValue([], "shadow.empty");
 
-// G4. Compuesto apuntando a otro compuesto (sin ciclo) — opción A: se resuelve igual,
-// sin juzgar semántica. El campo 'color' de 'card' terminará conteniendo el objeto
-// completo resuelto de 'accent', no un ColorValue.
-const g4_flatTokens = new Map<string, RawToken>([
-    ["accent", { $type: "shadow", $value: { offsetX: "1px", offsetY: "1px" } }],
-    ["card", { $type: "shadow", $value: { color: "{accent}", offsetX: "2px" } }],
-]);
-const g4_compoundValue = (g4_flatTokens.get("card") as RawToken).$value as Record<string, unknown>;
+// H6. Shadow único sin el campo 'spread' (obligatorio según la spec DTCG)
+// Esperado: { ok: false, error: { path: 'shadow.card.spread', ... } }
+const h6 = validateShadowValue(
+    {
+        color: validColor,
+        offsetX: { value: 0, unit: "px" },
+        offsetY: validDimension,
+        blur: { value: 8, unit: "px" },
+        // spread omitido a propósito
+    },
+    "shadow.card",
+);
 
-console.log("=== G4 (compuesto apuntando a otro compuesto, sin ciclo) ===");
-try {
-    console.log(resolveCompoundValue("card", g4_compoundValue, g4_flatTokens));
-} catch (error) {
-    console.log("ERROR INESPERADO:", error);
-}
+console.log("H1 (shadow único, sin inset):", h1);
+console.log("H2 (shadow único, inset true):", h2);
+console.log("H3 (array de 2, válidos):", h3);
+console.log("H4 (array, segundo roto):", h4);
+console.log("H5 (array vacío):", h5);
+console.log("H6 (falta spread, obligatorio):", h6);

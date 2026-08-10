@@ -95,6 +95,47 @@ export type TypographyValue = {
     lineHeight: LineHeightValue;
 };
 
+// ShadowValue
+export type SingleShadowValue = {
+    color: ColorValue;
+    offsetX: DimensionValue;
+    offsetY: DimensionValue;
+    blur: DimensionValue;
+    spread: DimensionValue;
+    inset?: boolean;
+};
+
+export type ShadowValue = SingleShadowValue | SingleShadowValue[];
+
+// STrokestyleValue
+export const STROKE_STYLE_KEYWORDS = [
+    "solid",
+    "dashed",
+    "dotted",
+    "double",
+    "groove",
+    "ridge",
+    "outset",
+    "inset",
+] as const satisfies readonly string[];
+
+export type StrokeStyleKeyword = (typeof STROKE_STYLE_KEYWORDS)[number];
+
+export type StrokeStyleObjectValue = {
+    dashArray: DimensionValue[];
+    lineCap: "round" | "butt" | "square";
+};
+
+export type StrokeStyleValue = StrokeStyleKeyword | StrokeStyleObjectValue;
+
+// gradient value
+export type GradientStop = {
+    color: ColorValue;
+    position: number;
+};
+
+export type GradientValue = GradientStop[];
+
 // GlobalToken
 export interface TokenValueMap {
     color: ColorValue;
