@@ -1,4 +1,12 @@
-export type UnsupportedType =
+export type SimpleType =
+    | "color"
+    | "dimension"
+    | "number"
+    | "fontWeight"
+    | "fontFamily"
+    | "duration"
+    | "cubicBezier";
+export type CompoundType =
     | "typography"
     | "shadow"
     | "border"
@@ -6,17 +14,9 @@ export type UnsupportedType =
     | "transition"
     | "strokeStyle";
 
-export type TokenType =
-    | "color"
-    | "dimension"
-    | "number"
-    | "fontWeight"
-    | "fontFamily"
-    | "duration"
-    | "cubicBezier"
-    | UnsupportedType;
+export type TokenType = SimpleType | CompoundType;
 
-export const SUPPORTED_TYPES = [
+export const SIMPLE_TYPES = [
     "color",
     "dimension",
     "number",
@@ -24,6 +24,15 @@ export const SUPPORTED_TYPES = [
     "fontFamily",
     "duration",
     "cubicBezier",
+] as const satisfies readonly TokenType[];
+
+export const COMPOUND_TYPES = [
+    "typography",
+    "shadow",
+    "border",
+    "gradient",
+    "transition",
+    "strokeStyle",
 ] as const satisfies readonly TokenType[];
 
 export type RawToken = {

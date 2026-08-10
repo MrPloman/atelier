@@ -8,7 +8,6 @@ export interface ResolvedToken<T extends keyof TokenValueMap = keyof TokenValueM
     references: string[];
 }
 
-// resolved.ts, junto a ResolvedToken
 export interface UnvalidatedResolvedToken {
     path: string;
     type: TokenType | undefined;
@@ -17,3 +16,5 @@ export interface UnvalidatedResolvedToken {
 }
 
 export type TokenSet = Map<string, ResolvedToken>;
+
+export type CompoundHop = { path: string; field: string };

@@ -1,6 +1,7 @@
-parseTokens;
-checkTokenShape;
 // // // playground/scratch.ts
+
+import { resolveCompoundValue } from "../src/resolve/resolve";
+import { RawToken } from "../src/types/tokens";
 
 // // // ============================================================
 // // // A) DEBEN TENER ÉXITO — sin typos
@@ -315,8 +316,6 @@ checkTokenShape;
 // // console.log("E10 (null):", e10);
 // // playground/scratch.ts
 // import { validateFontWeightValue } from "../src/check/shape/fontWeight"; // ajusta el path real
-import { checkTokenShape } from "../src/check/shape/index";
-import { parseTokens } from "../src/parse/parse";
 
 // // ============================================================
 // // F) validateFontWeightValue — casos de prueba
@@ -374,28 +373,114 @@ import { parseTokens } from "../src/parse/parse";
 // console.log("F8 (array):", f8);
 // console.log("F9 (boolean):", f9);
 // console.log("F10 (número negativo):", f10);
-const testDoc = JSON.stringify({
-    color: {
-        $type: "color",
-        brand: { $value: { colorSpace: "srgb", components: [1, 0, 0] } }, // válido
-    },
-    spacing: {
-        $type: "dimension",
-        broken: { $value: { value: "not-a-number", unit: "px" } }, // forma rota
-    },
-    effect: {
-        shadow: { $type: "shadow", $value: {} }, // tipo conocido pero no soportado
-    },
-    misterioso: { $value: "4px" }, // huérfano, sin $type en ningún nivel
-});
+// const testDoc = JSON.stringify({
+//     color: {
+//         $type: "color",
+//         brand: { $value: { colorSpace: "srgb", components: [1, 0, 0] } }, // válido
+//     },
+//     spacing: {
+//         $type: "dimension",
+//         broken: { $value: { value: "not-a-number", unit: "px" } }, // forma rota
+//     },
+//     effect: {
+//         shadow: { $type: "shadow", $value: {} }, // tipo conocido pero no soportado
+//     },
+//     misterioso: { $value: "4px" }, // huérfano, sin $type en ningún nivel
+// });
 
-const { resolved, errors: resolveErrors } = parseTokens(testDoc);
+// const { resolved, errors: resolveErrors } = parseTokens(testDoc);
 
-console.log("=== Errores de resolución (ciclos/referencias rotas) ===");
-console.log(resolveErrors);
+// console.log("=== Errores de resolución (ciclos/referencias rotas) ===");
+// console.log(resolveErrors);
 
-console.log("=== Validación de forma, token a token ===");
-for (const [path, token] of resolved) {
-    const shapeResult = checkTokenShape(token);
-    console.log(path, "→", shapeResult);
+// console.log("=== Validación de forma, token a token ===");
+// for (const [path, token] of resolved) {
+//     const shapeResult = checkTokenShape(token);
+//     console.log(path, "→", shapeResult);
+// }
+// playground/scratch.ts (añade esto a lo que ya tengas)
+// playground/scratch.ts
+
+// ============================================================
+// G) resolveCompoundValue — casos de prueba
+// ============================================================
+
+// G1. Caso sano — un typography con campos alias a tokens simples + campos literales
+const g1_flatTokens = new Map<string, RawToken>([
+    ["font.family.sans", { $type: "fontFamily", $value: "Inter" }],
+    ["font.size.lg", { $type: "dimension", $value: { value: 18, unit: "px" } }],
+    ["font.weight.bold", { $type: "fontWeight", $value: 700 }],
+    [
+        "typography.heading",
+        {
+            $type: "typography",
+            $value: {
+                fontFamily: "{font.family.sans}",
+                fontSize: "{font.size.lg}",
+                fontWeight: "{font.weight.bold}",
+                letterSpacing: "0.02em",
+                lineHeight: 1.4,
+            },
+        },
+    ],
+]);
+const g1_compoundValue = (g1_flatTokens.get("typography.heading") as RawToken).$value as Record<
+    string,
+    unknown
+>;
+
+console.log("=== G1 (caso sano, typography) ===");
+try {
+    console.log(resolveCompoundValue("typography.heading", g1_compoundValue, g1_flatTokens));
+} catch (error) {
+    console.log("ERROR INESPERADO:", error);
+}
+
+// G2. Ciclo directo — dos shadows que se referencian mutuamente por el campo 'color'
+const g2_flatTokens = new Map<string, RawToken>([
+    ["card", { $type: "shadow", $value: { color: "{modal}", offsetX: "2px" } }],
+    ["modal", { $type: "shadow", $value: { color: "{card}", offsetX: "4px" } }],
+]);
+const g2_compoundValue = (g2_flatTokens.get("card") as RawToken).$value as Record<string, unknown>;
+
+console.log("=== G2 (ciclo directo card/modal) ===");
+try {
+    console.log(resolveCompoundValue("card", g2_compoundValue, g2_flatTokens));
+} catch (error) {
+    console.log("ERROR (esperado):", error);
+}
+
+// G3. Referencia rota dentro de un campo de compuesto
+const g3_flatTokens = new Map<string, RawToken>([
+    [
+        "shadow.broken",
+        { $type: "shadow", $value: { color: "{shadow.doesNotExist}", offsetX: "2px" } },
+    ],
+]);
+const g3_compoundValue = (g3_flatTokens.get("shadow.broken") as RawToken).$value as Record<
+    string,
+    unknown
+>;
+
+console.log("=== G3 (referencia rota) ===");
+try {
+    console.log(resolveCompoundValue("shadow.broken", g3_compoundValue, g3_flatTokens));
+} catch (error) {
+    console.log("ERROR (esperado):", error);
+}
+
+// G4. Compuesto apuntando a otro compuesto (sin ciclo) — opción A: se resuelve igual,
+// sin juzgar semántica. El campo 'color' de 'card' terminará conteniendo el objeto
+// completo resuelto de 'accent', no un ColorValue.
+const g4_flatTokens = new Map<string, RawToken>([
+    ["accent", { $type: "shadow", $value: { offsetX: "1px", offsetY: "1px" } }],
+    ["card", { $type: "shadow", $value: { color: "{accent}", offsetX: "2px" } }],
+]);
+const g4_compoundValue = (g4_flatTokens.get("card") as RawToken).$value as Record<string, unknown>;
+
+console.log("=== G4 (compuesto apuntando a otro compuesto, sin ciclo) ===");
+try {
+    console.log(resolveCompoundValue("card", g4_compoundValue, g4_flatTokens));
+} catch (error) {
+    console.log("ERROR INESPERADO:", error);
 }
