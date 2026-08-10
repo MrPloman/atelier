@@ -84,6 +84,18 @@ export type LineHeightValue = number;
 
 // Letter Spacing value
 export type LetterSpacingValue = string;
+
+// TypographyValue
+
+export type TypographyValue = {
+    fontFamily: string | string[];
+    fontSize: DimensionValue;
+    fontWeight: FontWeightValue;
+    letterSpacing: LetterSpacingValue;
+    lineHeight: LineHeightValue;
+};
+
+// GlobalToken
 export interface TokenValueMap {
     color: ColorValue;
     dimension: DimensionValue;
