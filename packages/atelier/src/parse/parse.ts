@@ -1,4 +1,4 @@
-import { resolveAll } from "@/resolve/resolve";
+import { resolveAll, resolveAllCompounds } from "@/resolve/resolve";
 import type { Diagnostic, RawGroup, UnvalidatedResolvedToken } from "@/types";
 import { walk } from "@/walk/walk";
 
@@ -24,6 +24,13 @@ export function parseTokens(rawJson: string): {
         };
     }
 
-    const flatTokens = walk(document);
-    return resolveAll(flatTokens);
+    const { flatTokens, compoundPaths } = walk(document);
+
+    const simpleResult = resolveAll(flatTokens, compoundPaths);
+    const compoundResult = resolveAllCompounds(flatTokens, compoundPaths);
+
+    return {
+        resolved: new Map([...simpleResult.resolved, ...compoundResult.resolved]),
+        errors: [...simpleResult.errors, ...compoundResult.errors],
+    };
 }

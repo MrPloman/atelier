@@ -1,11 +1,23 @@
-import type { RawGroup, RawToken, TokenType } from "@/types";
+import { COMPOUND_TYPES, type RawGroup, type RawToken, type TokenType } from "@/types";
 import { isPlausibleNode, isRawToken } from "@/utils/type-guards";
 
 // src/walk.ts
-export function walk(document: RawGroup): Map<string, RawToken> {
+export function walk(document: RawGroup): {
+    flatTokens: Map<string, RawToken>;
+    compoundPaths: Set<string>;
+} {
     const flatTokens = new Map<string, RawToken>();
     walkNode(document, "", undefined, flatTokens);
-    return flatTokens;
+    const compoundPaths = new Set<string>();
+    for (const [path, token] of flatTokens) {
+        if (
+            token.$type !== undefined &&
+            (COMPOUND_TYPES as readonly TokenType[]).includes(token.$type)
+        ) {
+            compoundPaths.add(path);
+        }
+    }
+    return { flatTokens, compoundPaths };
 }
 
 function errorUnexpectedNodeShape(path: string): never {

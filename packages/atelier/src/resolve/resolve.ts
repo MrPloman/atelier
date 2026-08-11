@@ -5,7 +5,10 @@ import type { UnvalidatedResolvedToken } from "@/types/resolved";
 import { COMPOUND_TYPES } from "@/types/tokens";
 import { isRawToken } from "@/utils/type-guards";
 
-export function resolveAll(_flatTokens: Map<string, RawToken>): {
+export function resolveAll(
+    _flatTokens: Map<string, RawToken>,
+    compoundPaths: Set<string>,
+): {
     resolved: Map<string, UnvalidatedResolvedToken>;
     errors: Diagnostic[];
 } {
@@ -17,6 +20,8 @@ export function resolveAll(_flatTokens: Map<string, RawToken>): {
         errors: [],
     };
     for (const path of _flatTokens.keys()) {
+        if (compoundPaths.has(path)) continue; // no es su responsabilidad
+
         try {
             globalResults.resolved.set(path, resolve(path, _flatTokens));
         } catch (error: unknown) {
@@ -27,6 +32,52 @@ export function resolveAll(_flatTokens: Map<string, RawToken>): {
                 code: "",
             };
             if (error instanceof AtelierResolveError) {
+                diagnostic = { ...diagnostic, hint: error.message, code: error.kind };
+            } else {
+                diagnostic = { ...diagnostic, hint: "unexpected_error", code: "unknown" };
+            }
+            globalResults.errors = [...globalResults.errors, diagnostic];
+        }
+    }
+    return globalResults;
+}
+
+export function resolveAllCompounds(
+    _flatTokens: Map<string, RawToken>,
+    compoundPaths: Set<string>,
+): {
+    resolved: Map<string, UnvalidatedResolvedToken>;
+    errors: Diagnostic[];
+} {
+    const globalResults: {
+        resolved: Map<string, UnvalidatedResolvedToken>;
+        errors: Diagnostic[];
+    } = {
+        resolved: new Map(),
+        errors: [],
+    };
+    for (const path of compoundPaths) {
+        try {
+            const token = _flatTokens.get(path);
+            if (!token) {
+                throw new Error(
+                    `[resolveAllCompounds] Missing token for path "${path}" — this should be unreachable since compoundPaths is derived from _flatTokens.`,
+                );
+            }
+            const { value, references } = resolveCompoundValue(
+                path,
+                token.$value as Record<string, unknown>,
+                _flatTokens,
+            );
+            globalResults.resolved.set(path, {
+                path,
+                type: token.$type,
+                value,
+                references,
+            });
+        } catch (error: unknown) {
+            let diagnostic: Diagnostic = { severity: "error", path, hint: "", code: "" };
+            if (error instanceof AtelierCompoundResolveError) {
                 diagnostic = { ...diagnostic, hint: error.message, code: error.kind };
             } else {
                 diagnostic = { ...diagnostic, hint: "unexpected_error", code: "unknown" };
@@ -53,10 +104,7 @@ export function resolveCompoundValue(
     path: string,
     compoundValue: Record<string, unknown>,
     _flatTokens: Map<string, RawToken>,
-): Record<string, unknown> {
-    // Siembra el hop inicial ANTES de cualquier recursión — así el propio
-    // punto de partida queda vigilado desde el minuto uno, igual que
-    // startPath en resolve().
+): { value: Record<string, unknown>; references: string[] } {
     return resolveCompoundValueInner(path, compoundValue, _flatTokens, [{ path, field: "<root>" }]);
 }
 
@@ -66,9 +114,9 @@ function resolveCompoundValueInner(
     compoundValue: Record<string, unknown>,
     _flatTokens: Map<string, RawToken>,
     detectedCompoundRoutes: CompoundHop[],
-): Record<string, unknown> {
+): { value: Record<string, unknown>; references: string[] } {
     const resolvedFields: Record<string, unknown> = {};
-
+    const references: string[] = [];
     for (const [field, fieldValue] of Object.entries(compoundValue)) {
         if (!valueIsNotFinal(fieldValue)) {
             resolvedFields[field] = fieldValue;
@@ -77,6 +125,8 @@ function resolveCompoundValueInner(
 
         const referencedPath = routeStringParser(fieldValue as string);
         const targetToken = _flatTokens.get(referencedPath);
+
+        references.push(referencedPath);
 
         if (!targetToken || !targetToken.$value || isRawToken(targetToken) === false) {
             throw new AtelierCompoundResolveError({
@@ -115,19 +165,22 @@ function resolveCompoundValueInner(
                 });
             }
 
-            resolvedFields[field] = resolveCompoundValueInner(
+            const nested = resolveCompoundValueInner(
                 referencedPath,
                 targetToken.$value as Record<string, unknown>,
                 _flatTokens,
                 newDetectedCompoundRoutes,
             );
+            resolvedFields[field] = nested.value;
+            references.push(...nested.references);
         } else {
             const simpleResolved = resolve(referencedPath, _flatTokens);
             resolvedFields[field] = simpleResolved.value;
+            references.push(...simpleResolved.references);
         }
     }
 
-    return resolvedFields;
+    return { value: resolvedFields, references };
 }
 
 function iteratorMap(
