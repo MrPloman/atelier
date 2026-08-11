@@ -147,8 +147,6 @@ export interface TokenValueMap {
     cubicBezier: CubicBezierValue;
     border: BorderValue;
     transition: TransitionValue;
-    lineHeight: LineHeightValue;
-    letterSpacing: LetterSpacingValue;
     typography: TypographyValue;
     shadow: ShadowValue;
     strokeStyle: StrokeStyleValue;
