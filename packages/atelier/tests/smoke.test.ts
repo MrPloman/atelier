@@ -10,6 +10,6 @@ describe("smoke test", () => {
             ["a", { $value: "{b}" }],
         ]);
 
-        console.log(resolveAll(mapaConCiclo));
+        console.log(resolveAll(mapaConCiclo, new Set<string>(["a", "b"])));
     });
 });

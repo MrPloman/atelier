@@ -7,7 +7,10 @@ import { validateDimensionValue } from "./dimension";
 import { validateDurationValue } from "./duration";
 import { validateFontFamilyValue } from "./fontFamily";
 import { validateFontWeightValue } from "./fontWeight";
+import { validateGradientValue } from "./gradient";
 import { validateNumberValue } from "./number";
+import { validateShadowValue } from "./shadow";
+import { validateStrokeStyleValue } from "./strokeStyle";
 import { validateTransitionValue } from "./transition";
 import { validateTypographyValue } from "./typography";
 
@@ -96,18 +99,30 @@ export function checkTokenShape(token: UnvalidatedResolvedToken): ShapeResult<Re
                 value: { path, type, value: result.value, references },
             };
         }
-        case "shadow":
-        case "gradient":
-        case "strokeStyle":
+        case "shadow": {
+            const result = validateShadowValue(value, path);
+            if (!result.ok) return result;
             return {
-                ok: false,
-                error: {
-                    severity: "warning",
-                    code: "unsupported-type",
-                    path,
-                    hint: `Token type "${type}" is not yet supported by Atelier's shape validation.`,
-                },
+                ok: true,
+                value: { path, type, value: result.value, references },
             };
+        }
+        case "gradient": {
+            const result = validateGradientValue(value, path);
+            if (!result.ok) return result;
+            return {
+                ok: true,
+                value: { path, type, value: result.value, references },
+            };
+        }
+        case "strokeStyle": {
+            const result = validateStrokeStyleValue(value, path);
+            if (!result.ok) return result;
+            return {
+                ok: true,
+                value: { path, type, value: result.value, references },
+            };
+        }
 
         default: {
             const _exhaustiveCheck: never = type;
