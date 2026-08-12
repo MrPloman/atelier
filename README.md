@@ -1,44 +1,63 @@
 # Atelier
 
-Catches broken, unused, and inaccessible design tokens before they reach production.
+A TypeScript-first design token pipeline built on the [DTCG](https://www.designtokens.org/) format. Resolves, validates, transforms, and generates CSS/SCSS/TS from your tokens — and catches broken references before they reach production.
 
-- 🔗 Broken references and circular aliases
-- 🧹 Orphaned tokens (defined but never used)
-- 🚫 Unreferenced CSS variables (used in code but not defined)
-- ♿ WCAG contrast failures on semantic color pairs
-- ✅ Exits non-zero in CI — nothing reaches production silently
+- 🔗 Broken references and circular aliases — for simple tokens _and_ compound token fields (`shadow`, `typography`, `border`...)
+- 🧩 Full DTCG coverage — all 13 token types, including the six compound types
+- 🧬 Per-field shape validation — diagnostics point at the exact broken field, not just "invalid token"
+- 🔄 Composable transform pipeline (unit conversion, color space conversion, ...)
+- 📦 Three generators — CSS custom properties, SCSS variables, typed TS constants
+- 🛡️ `DotPaths<T>` — turns a token document into an autocomplete-safe, typo-proof union of paths
+- ✅ Exits non-zero in CI — a build with unresolved tokens never succeeds silently
 
-> **Status:** in development. Not usable yet. Follow along or check [DECISIONS.md](./docs/DECISIONS.md).
+> **Status:** `resolve` → `validate` → `transform` → `generate` is stable and published (v1.0). Linting rules beyond reference resolution — orphaned tokens, unreferenced CSS variables, contrast checks — are on the [roadmap](#roadmap), not implemented yet. See [DECISIONS.md](./docs/DECISIONS.md) for the reasoning behind the bigger calls.
 
 ## Example
 
 ```bash
-npx @mrploman/atelier check tokens.json
+npx atelier build --config ./atelier.config.ts
 
-✖ 2 errors, 1 warning
+✗ broken.a [cycle]
+  Cyclic reference detected at iteratorMap().
+  Cycle: broken.a → broken.b → broken.a
 
-ERROR  color.text.on-brand
-       Broken reference: {color.palette.white} does not exist.
-
-ERROR  contrast  color.text.default on color.surface.subtle
-       Ratio 3.9:1. Minimum for AA: 4.5:1.
-
-WARN   color.palette.blue-450
-       Defined but never referenced.
+1 error(s)
+  wrote ./dist/tokens.css
 ```
 
-Exits with a non-zero code — wire it into your CI and nothing broken reaches production.
+The valid tokens are still written — `broken.a` and `broken.b` are the only ones excluded. The process exits with code `1` regardless, so a CI pipeline never treats a partially-broken build as a success.
 
 ## Usage
 
-```ts
-import { check } from "@mrploman/atelier";
+### CLI
 
-const result = check(tokens);
+```typescript
+// atelier.config.ts
+import { defineConfig } from "@mrploman/atelier";
 
-if (result.some((r) => !r.ok)) {
-    process.exit(1);
+export default defineConfig({
+    input: "./tokens/tokens.json",
+    output: "./dist/tokens",
+    formats: ["css", "scss", "ts"],
+});
+```
+
+```bash
+npx atelier build
+```
+
+### Library
+
+```typescript
+import { buildTokens, generateCSS } from "@mrploman/atelier";
+
+const { tokens, errors } = buildTokens(rawJson);
+
+if (errors.length > 0) {
+    console.warn(errors);
 }
+
+console.log(generateCSS(tokens));
 ```
 
 ## Error handling philosophy
@@ -83,7 +102,18 @@ if (errors.length > 0) {
 
 A document with a broken structure isn't a "document with some errors" — it's not a token document at all, so there's nothing sensible to report piece by piece. A document with valid structure but a cyclic reference somewhere _is_ a real token document with a real, specific, reportable problem — and whoever's consuming it deserves to see every such problem in one pass, not just the first one that happened to be hit.
 
+## Roadmap
+
+Reference resolution (broken links, cycles — both simple and compound) is real and covered by tests today. These are not yet implemented:
+
+- Orphaned tokens — defined but never referenced anywhere
+- Unreferenced CSS variables — used in code but not defined as a token
+- WCAG contrast checks on semantic color pairs
+- `atelier check` as a standalone command distinct from `build`
+
 ## Why not Style Dictionary?
+
+WIP
 
 ## Packages
 

@@ -1,46 +1,41 @@
 {
-          "name": "@mrploman/atelier",
-          "version": "0.0.1",
-          "description": "Catches broken, unused, and inaccessible design tokens before they reach production",
-          "type": "module",
-          "license": "MIT",
-          "sideEffects": false,
-          "engines": {
-                    "node": ">=22"
-          },
-          "publishConfig": {
-                    "access": "public"
-          },
-          "exports": {
-                    ".": {
-                              "types": "./dist/index.d.ts",
-                              "import": "./dist/index.js"
-                    },
-                    "./package.json": "./package.json"
-          },
-          "main": "./dist/index.js",
-          "types": "./dist/index.d.ts",
-          "files": [
-                    "dist"
-          ],
-          "scripts": {
-                    "build": "tsdown",
-                    "test": "vitest run",
-                    "test:watch": "vitest",
-                    "typecheck": "tsc --noEmit"
-          },
-          "devDependencies": {
-                    "@types/node": "^26.1.2",
-                    "tsdown": "^0.9.0",
-                    "tsx": "^4.23.9",
-                    "typescript": "^5.9.0",
-                    "vitest": "^3.0.0"
-          },
-          "bin": {
-                    "atelier": "./dist/cli.js"
-          },
-          "dependencies": {
-                    "chokidar": "^5.0.0",
-                    "jiti": "^2.7.0"
-          }
+                "name": "@mrploman/atelier",
+                "version": "1.0.1",
+                "description": "TypeScript-first design token pipeline: parse, resolve, validate, transform and generate CSS/SCSS/TS from DTCG token documents.",
+                "type": "module",
+                "sideEffects": false,
+                "bin": {
+                                "atelier": "./dist/cli.js"
+                },
+                "exports": {
+                                ".": {
+                                                "types": {
+                                                                "import": "./dist/index.d.mts",
+                                                                "require": "./dist/index.d.cts"
+                                                },
+                                                "import": "./dist/index.mjs",
+                                                "require": "./dist/index.cjs"
+                                }
+                },
+                "main": "./dist/index.cjs",
+                "module": "./dist/index.mjs",
+                "types": "./dist/index.d.mts",
+                "files": [
+                                "dist"
+                ],
+                "publishConfig": {
+                                "access": "public"
+                },
+                "scripts": {
+                                "build": "tsdown"
+                },
+                "engines": {
+                                "node": ">=20.6"
+                },
+                "devDependencies": {
+                                "publint": "^0.3.23",
+                                "tsdown": "...",
+                                "jiti": "...",
+                                "chokidar": "..."
+                }
 }

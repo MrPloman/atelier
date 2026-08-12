@@ -3,7 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig([
     {
         entry: ["src/index.ts"],
-        format: ["esm"],
+        format: ["esm", "cjs"],
         dts: true,
         clean: true,
         sourcemap: true,
@@ -17,6 +17,7 @@ export default defineConfig([
         dts: false,
         clean: false,
         platform: "node",
+        outExtensions: () => ({ js: ".js" }),
         alias: {
             "@": new URL("./src", import.meta.url).pathname,
         },
