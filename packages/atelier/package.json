@@ -35,5 +35,12 @@
                     "tsx": "^4.23.9",
                     "typescript": "^5.9.0",
                     "vitest": "^3.0.0"
+          },
+          "bin": {
+                    "atelier": "./dist/cli.js"
+          },
+          "dependencies": {
+                    "chokidar": "^5.0.0",
+                    "jiti": "^2.7.0"
           }
 }
