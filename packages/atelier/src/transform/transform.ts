@@ -30,7 +30,7 @@ export function applyTransforms(
             );
         }
         const transformedValue = applyTransformsToValue(token.type, token.value, transforms);
-        transformedTokens.set(path, { ...token, value: transformedValue });
+        transformedTokens.set(path, { ...token, value: transformedValue } as ResolvedToken);
     }
 
     return transformedTokens;
