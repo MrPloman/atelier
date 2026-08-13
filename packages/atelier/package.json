@@ -1,6 +1,6 @@
 {
                 "name": "@mrploman/atelier",
-                "version": "1.0.1",
+                "version": "1.0.2",
                 "description": "TypeScript-first design token pipeline: parse, resolve, validate, transform and generate CSS/SCSS/TS from DTCG token documents.",
                 "type": "module",
                 "sideEffects": false,
